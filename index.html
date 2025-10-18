@@ -1,79 +1,120 @@
-<script>
-  async function initMap() {
-    const map = new google.maps.Map(document.getElementById("map"), {
-      zoom: 5,
-      center: { lat: 39.5, lng: -98.35 } // centro de USA
-    });
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Basic Google Map Embed</title>
+  <style>
+    /* Responsive 16:9 container so the map scales nicely */
+    .map-wrap {
+      width: 100%;
+      max-width: 1000px;
+      margin: 24px auto;
+    }
+    .map-embed { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+    .hint { max-width: 1000px; margin: 0 auto; padding: 0 16px; color: #333; }
+    code { background:#f4f4f5; padding:2px 6px; border-radius:6px; }
 
-    const sheetId = "1UU6QeID1wbqugVXkJJM6DWZpHhzqKUuCYarKB-SWK0I";
-    const sheetGid = "283380080";
-    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&gid=${sheetGid}`;
+    /* InfoWindow styling */
+    .infowin { max-width: 280px; }
+    .infowin h3 { margin: 0 0 8px 0; font-size: 16px; }
+    .infowin img { display: block; width: 100%; height: auto; border-radius: 8px; margin: 8px 0; }
+    .infowin p { margin: 4px 0; }
+    .infowin .price { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="map-wrap">
+    <div id="map" style="height: 600px; width: 100%;"></div>
 
-    const response = await fetch(url);
-    const text = await response.text();
+    <script async
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAICOnPq_rKDMXcA5WF5huQWRskOag-ENQ&callback=initMap">
+    </script>
 
-    // El JSON viene envuelto en un callback, así que lo limpiamos
-    const json = JSON.parse(text.substring(47, text.length - 2));
-    const rows = json.table.rows;
-
-    const infoWindow = new google.maps.InfoWindow();
-    const bounds = new google.maps.LatLngBounds();
-
-    rows.forEach(r => {
-      const status = r.c[0]?.v || "";  // Columna A
-      const title = r.c[1]?.v || "";   // Columna B
-      const price = r.c[2]?.v || "";   // Columna C
-      const address = r.c[3]?.v || ""; // Columna D
-      const acres = r.c[4]?.v || "";   // Columna E
-      const lat = parseFloat(r.c[5]?.v) || 0;  // Columna F
-      const lng = parseFloat(r.c[6]?.v) || 0;  // Columna G
-      const link = r.c[7]?.v || "#";   // Columna H
-      const photo = r.c[8]?.v || "https://placehold.co/800x500?text=No+Image"; // Columna I
-
-      if (!lat || !lng) return; // omitir filas sin coordenadas
-
-      const marker = new google.maps.Marker({
-        position: { lat, lng },
-        map,
-        title,
-        icon: status.toLowerCase().includes("sold")
-          ? "https://maps.google.com/mapfiles/ms/icons/gray-dot.png"
-          : "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
-      });
-
-      marker.addListener("click", () => {
-        const container = document.createElement("div");
-        container.className = "infowin";
-        container.innerHTML = `
-          <h3>${title}</h3>
-          <img id="iw-img" src="${photo}" alt="Featured photo for ${title}">
-          <p>${address}</p>
-          <p>${acres} acres</p>
-          <p class="price">${price}</p>
-          <p><a href="${link}" target="_blank">View Property</a></p>
-        `;
-
-        const img = container.querySelector('#iw-img');
-        img.addEventListener('load', () => infoWindow.setContent(container));
-        img.addEventListener('error', () => {
-          img.src = 'https://placehold.co/800x500?text=No+Image';
-          infoWindow.setContent(container);
+    <script>
+      async function initMap() {
+        const map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 4,
+          center: { lat: 39.5, lng: -98.35 } // USA centroid-ish
         });
 
-        infoWindow.setContent(container);
-        infoWindow.open({ map, anchor: marker });
-      });
+        const sheetId = "1UU6QeID1wbqugVXkJJM6DWZpHhzqKUuCYarKB-SWK0I";
+        const gid = "283380080";
+        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&gid=${gid}`;
 
-      bounds.extend({ lat, lng });
-    });
+        const response = await fetch(url);
+        const text = await response.text();
+        const json = JSON.parse(text.substring(47, text.length - 2));
+        const rows = json.table.rows;
 
-    map.fitBounds(bounds);
-  }
-</script>
+        const infoWindow = new google.maps.InfoWindow();
+        const bounds = new google.maps.LatLngBounds();
 
-<script async
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAICOnPq_rKDMXcA5WF5huQWRskOag-ENQ&callback=initMap">
-</script>
+        rows.forEach(r => {
+          const status = r.c[0]?.v || "";  // Columna A
+          const title = r.c[1]?.v || "";   // Columna B
+          const price = r.c[2]?.v || "";   // Columna C
+          const address = r.c[3]?.v || ""; // Columna D
+          const acres = r.c[4]?.v || "";   // Columna E
+          const lat = parseFloat(r.c[5]?.v) || 0;  // Columna F
+          const lng = parseFloat(r.c[6]?.v) || 0;  // Columna G
+          const link = r.c[7]?.v || "#";   // Columna H
+          const photo = r.c[8]?.v || "https://placehold.co/800x500?text=No+Image"; // Columna I
+
+          if (!lat || !lng) return; // skip if no coords
+
+          const iconUrl = status.toLowerCase().includes("sold")
+            ? "https://maps.google.com/mapfiles/ms/icons/gray-dot.png"
+            : "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
+
+          const marker = new google.maps.Marker({
+            position: { lat, lng },
+            map,
+            title,
+            icon: iconUrl
+          });
+
+          marker.addListener("click", () => {
+            const container = document.createElement("div");
+            container.className = "infowin";
+            container.innerHTML = `
+              <h3>${title}</h3>
+              <img id="iw-img" src="${photo}" alt="Featured photo for ${title}">
+              <p>${address}</p>
+              <p>${acres} acres</p>
+              <p class="price">${price}</p>
+              <p><a href="${link}" target="_blank">View Property</a></p>
+            `;
+
+            const img = container.querySelector('#iw-img');
+            if (img) {
+              img.addEventListener('load', () => infoWindow.setContent(container));
+              img.addEventListener('error', () => {
+                img.src = 'https://placehold.co/800x500?text=No+Image';
+                infoWindow.setContent(container);
+              });
+            }
+
+            infoWindow.setContent(container);
+            infoWindow.open({ map, anchor: marker });
+          });
+
+          bounds.extend(marker.getPosition());
+        });
+
+        map.fitBounds(bounds);
+      }
+    </script>
+  </div>
+
+  <p class="hint">
+    Tip: For an address instead of coordinates, change the iframe <code>src</code> to something like:<br>
+    <code>https://www.google.com/maps?q=100+Olivas+Rd,+Los+Lunas,+NM+87031&z=12&output=embed</code>
+  </p>
+</body>
+</html>
+
 
     <code>https://www.google.com/maps?q=100+Olivas+Rd,+Los+Lunas,+NM+87031&z=12&output=embed</code>
   </p>
