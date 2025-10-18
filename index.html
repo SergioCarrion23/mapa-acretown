@@ -3,20 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Basic Google Map Embed</title>
+  <title>Properties Map</title>
   <style>
-    /* Responsive 16:9 container so the map scales nicely */
     .map-wrap {
       width: 100%;
       max-width: 1000px;
       margin: 24px auto;
     }
-    .map-embed { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
     .hint { max-width: 1000px; margin: 0 auto; padding: 0 16px; color: #333; }
     code { background:#f4f4f5; padding:2px 6px; border-radius:6px; }
 
-    /* InfoWindow styling */
     .infowin { max-width: 280px; }
     .infowin h3 { margin: 0 0 8px 0; font-size: 16px; }
     .infowin img { display: block; width: 100%; height: auto; border-radius: 8px; margin: 8px 0; }
@@ -36,7 +33,7 @@
       async function initMap() {
         const map = new google.maps.Map(document.getElementById("map"), {
           zoom: 4,
-          center: { lat: 39.5, lng: -98.35 } // USA centroid-ish
+          center: { lat: 39.5, lng: -98.35 }
         });
 
         const sheetId = "1UU6QeID1wbqugVXkJJM6DWZpHhzqKUuCYarKB-SWK0I";
@@ -51,22 +48,28 @@
         const infoWindow = new google.maps.InfoWindow();
         const bounds = new google.maps.LatLngBounds();
 
+        const validStatuses = ["full marketing", "sale pending", "basic marketing", "sold"];
+
         rows.forEach(r => {
-          const status = r.c[0]?.v || "";  // Columna A
-          const title = r.c[1]?.v || "";   // Columna B
-          const price = r.c[2]?.v || "";   // Columna C
-          const address = r.c[3]?.v || ""; // Columna D
-          const acres = r.c[4]?.v || "";   // Columna E
-          const lat = parseFloat(r.c[5]?.v) || 0;  // Columna F
-          const lng = parseFloat(r.c[6]?.v) || 0;  // Columna G
-          const link = r.c[7]?.v || "#";   // Columna H
-          const photo = r.c[8]?.v || "https://placehold.co/800x500?text=No+Image"; // Columna I
+          const status = (r.c[0]?.v || "").trim();
+          const title = r.c[1]?.v || "";
+          const price = r.c[2]?.v || "";
+          const address = r.c[3]?.v || "";
+          const acres = r.c[4]?.v || "";
+          const lat = parseFloat(r.c[5]?.v) || 0;
+          const lng = parseFloat(r.c[6]?.v) || 0;
+          const link = r.c[7]?.v || "#";
+          const photo = r.c[8]?.v || "https://placehold.co/800x500?text=No+Image";
 
-          if (!lat || !lng) return; // skip if no coords
+          if (!lat || !lng) return;
 
-          const iconUrl = status.toLowerCase().includes("sold")
-            ? "https://maps.google.com/mapfiles/ms/icons/gray-dot.png"
-            : "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
+          const normalizedStatus = status.toLowerCase();
+          if (!validStatuses.includes(normalizedStatus)) return;
+
+          // Color: SOLD = rojo, el resto = azul
+          const iconUrl = normalizedStatus === "sold"
+            ? "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
+            : "https://maps.google.com/mapfiles/ms/icons/blue-dot.png";
 
           const marker = new google.maps.Marker({
             position: { lat, lng },
@@ -81,6 +84,7 @@
             container.innerHTML = `
               <h3>${title}</h3>
               <img id="iw-img" src="${photo}" alt="Featured photo for ${title}">
+              <p><strong>Status:</strong> ${status}</p>
               <p>${address}</p>
               <p>${acres} acres</p>
               <p class="price">${price}</p>
@@ -110,12 +114,6 @@
 
   <p class="hint">
     Tip: For an address instead of coordinates, change the iframe <code>src</code> to something like:<br>
-    <code>https://www.google.com/maps?q=100+Olivas+Rd,+Los+Lunas,+NM+87031&z=12&output=embed</code>
-  </p>
-</body>
-</html>
-
-
     <code>https://www.google.com/maps?q=100+Olivas+Rd,+Los+Lunas,+NM+87031&z=12&output=embed</code>
   </p>
 </body>
